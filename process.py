@@ -1,6 +1,7 @@
 import pandas as pd
 from sqlalchemy import create_engine
 import argparse
+from utils import *
 
 parser = argparse.ArgumentParser()
 parser.add_argument("filename", type=str, help="The name of the file to process")
@@ -10,13 +11,6 @@ filename = args.filename
 ALLOWED_COUNTRY = ['US', 'IT', 'JP', 'DE'] #Sorry Mars
 ALLOWED_OS = ['Android', 'Web', 'iOS'] # BYEBYE EINAC
 
-
-# Replace with your PostgreSQL credentials
-user = "postgres"
-password = "ustipak1"
-host = "localhost"  # Or the appropriate host
-port = "5432"       # Default PostgreSQL port
-database = "nordeus"
 
 # Create the database connection string
 engine = create_engine(f"postgresql+psycopg2://{user}:{password}@{host}:{port}/{database}")

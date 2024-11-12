@@ -198,7 +198,7 @@ def get_player_stats(request: UserStatsRequest):
     match_ratio = 0
     if play_time > 0:
         match_ratio = match_time / play_time
-    response['match_to_game_ratio'] = match_ratio
+    response['match_to_game_ratio'] = match_ratio * 100
 
     return PlayerStatsResponse(**response)
 

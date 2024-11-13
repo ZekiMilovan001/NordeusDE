@@ -140,6 +140,101 @@ DATABASE=nordeus
     ]
 }
 ```
+# Discussion
+## Dataset description (events.jsonl)
+
+### Parameters
+| Parameter Name    | Parameter Type | Parameter Description |
+|-------------------|----------------|------------------------|
+| `event_id`        | `INT`          | Unique identifier representing an event |
+| `event_timestamp` | `INT`          | Time of event represented as Unix time |
+| `event_type`      | `STRING`       | One of the following: `registration`, `session_ping`, `match` |
+| `event_data`      | `JSON OBJECT`  | JSON object containing all event-specific data (check event data below) |
+
+For our analysis, we are interested in three types of events: **registration**, **session_ping**, and **match**.
+
+---
+
+## Event Types
+
+### Registration
+The **registration** event is generated when a user registers. At that time, the user receives a unique identifier to track them across all other events. This event also includes the country and OS of the device used.
+
+| Parameter Name | Parameter Type | Parameter Description |
+|----------------|----------------|------------------------|
+| `country`      | `STRING`       | Country from which the user registered |
+| `user_id`      | `STRING`       | Unique identifier representing a user |
+| `device_os`    | `STRING`       | OS of the device user registered from. Valid values: `iOS`, `Android`, `Web` |
+
+### Session_ping
+A **session** is the continuous period during which a player interacts with a game. Sessions are tracked using **session_ping** events. This event is sent when a user opens the game and every 60 seconds afterward, as long as the game remains open. If more than 60 seconds pass between two ping events, they are considered different sessions. The first event in a session has the type `session_start`, and the last event has the type `session_end`.
+
+| Parameter Name | Parameter Type | Parameter Description |
+|----------------|----------------|------------------------|
+| `user_id`      | `STRING`       | Unique identifier representing a user |
+| `type`         | `STRING`       | Possible values: `session_start`, `session_end`, and `""` (empty string) |
+
+## Match Event
+
+This event is triggered when a match starts and finishes. If the match has started, the values for `home_goals_scored` and `away_goals_scored` will be `NULL`. When the event signals that the match has finished, these fields will contain non-`NULL` values.
+
+### Event Parameters
+
+| Parameter           | Type      | Description                                                                 |
+|---------------------|-----------|-----------------------------------------------------------------------------|
+| `match_id`          | STRING    | Identifier representing one match (same value for both match start and end) |
+| `home_user_id`      | STRING    | Unique identifier representing the home user                                |
+| `away_user_id`      | STRING    | Unique identifier representing the away user                                |
+| `home_goals_scored` | INTEGER   | Number of goals scored by the home team (or `NULL` if the match just started) |
+| `away_goals_scored` | INTEGER   | Number of goals scored by the away team (or `NULL` if the match just started) |
+
+---
+
+## Dataset: Timezones
+
+For simplicity, each country is assigned exactly one timezone.
+
+### Dataset Parameters
+
+| Parameter   | Type   | Description                                                                |
+|-------------|--------|----------------------------------------------------------------------------|
+| `country`   | STRING | Country code                                                               |
+| `timezone`  | STRING | Timezone for the country. Possible values: "America/New_York", "Asia/Tokyo", "Europe/Berlin", "Europe/Rome" |
+---
+## Approach
+### Data cleaning
+1. Checked the data integrity as per column definitions given in the task.
+      - Checked if `goals_scored` fields have all ***int*** values. (*They do*)
+      - Checked if `user_id` field in registration *unique*. (i.e. Checked if one user can register once with same `user_id`)
+      - Checked if `device_os` and `country` fields contain unallowed values. (They did, *Mars* for `country` and *ENIAC* for `device_os`)
+      - > **Note 1:** There was repetition of registration for same `user_id` value, but also one of them had `device_os` value *ENIAC*, which after discarding it, solves the problem.
+      - > **Note 2:** Regarding the *Mars* field, in this solution, I discarded that register row, but also `country` value could be changed to random or one of the allowed values for `country`, depending on requirements and is open for discussion.
+      - Droped the `type` column in session data, since i wanted that bonus 😎.
+2. Explored additional information about dataset.
+      - Checked if `session_ping` and `match` types of pings can happen at the same time. (i.e. Checked if general playtime can be queried using only session info. It can.)
+### Queries
+Since some of them are pretty simple, such as extracting country of the registered user, I will be skipping some.
+1. How many days have passed since this user last logged in?
+      - Idea was to filter data based on `date` parameter (`event_time` date-value <= `date`) and get the most recent one, then calculate delta between that time and `date` value.
+2. Number of sessions for that user on that day. If no date is provided give the all time number of sessions.
+      - *Time filter:* Idea was to find bounds of `date` parameter. Lower bound is first second of the day, for given `date` parameter (or 0 if no values were passed) and upper bound is last second of the day (or last second of current day, if no values were passed).
+      - *Session count:* Idea was to sort by `event_timestamp` ascendingly for each `user_id` value and calculating value of the new flag field as:
+           - 0: if difference between current and last ping is less than 60 seconds, as per task definition. (i.e. if it is not start of new session)
+           - 1: in other cases, meaning that that row is the start of new session.
+           - By summing these flags, all session starts are counted and number of sessions is extracted.
+      - *Session duration:* : Idea was to find sum of all differences between last and first ping in each session.
+3. Total points won on matches grouped by whether the user was home or away, for specific day or all time, depending if `date` parameter has value.
+           - *Time filter:* same idea as before.
+           - *Home points:* filter data where `user_id` is equal to `home_user_id` field and sum points accordingly.
+           - *Away points:* filter data where `user_id` is equal to `away_user_id` field and sum points accordingly.
+4. Match time as a percentage of total game time. Represents how much of a player's overall game session was spent actively participating in a match, compared to the entire time spent in the game
+      - *Starts* and *Ends* temporary tables: Fitered by match start or end.
+      - *Games table*: It has same data as original, with the addition of start and end time for each game.
+      - *Games away* and *Games home* table: Has contents of *Games table* but filtered whether user was playing at home or away. Wiith addition of `live_game` field, that is showing how much player was participating in a match since start of it (e.g. 60 - `players_latency`, where `player_latency` is telling us how late player was late for the match start). Similar stands for match ends.
+      - *Result* by comining these tables and summing `live_game` values for that player, we can extract how much time player has spent playing matches actively. Ratio is caluclated using already found time spent value.
+
+
+
 
 
 

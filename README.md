@@ -56,13 +56,15 @@ DATABASE=nordeus
    - Enter a name for your database.
 
    > **Note:** This is a simple approach to quickly get started with the API. 😊
-
-3. **Extract Data into Database**:
+3. Create python virtual enviroment and install dependencies:
+     - Run `python -m venv venv` in the terminal you have recently opened in the folder.
+     - Run `pip install -r requirements.txt`.
+4. **Extract Data into Database**:
    - Run the `process.py` script to extract data from `.jsonl` files into the database.
    - **Example:** `python process.py events_test.jsonl`
-4. Start **Uvicorn** server:
+5. Start **Uvicorn** server:
    - Run `uvicorn main:app` in the terminal.
-5. Start using API (e.g. Postman)
+6. Start using API (e.g. Postman)
 
 ---
 # REST API

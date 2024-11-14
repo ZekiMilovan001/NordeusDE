@@ -1,4 +1,4 @@
-# Nordeus Data Engineering challange
+# Nordeus Data Engineering challenge
 
 ## Download project
 
@@ -258,7 +258,7 @@ Since some of them are pretty simple, such as extracting country of the register
 2. *"Table for each query"*: If the data was manipulated in such a way, that table gets created for every query in task requirements, the queries would be faster, shorter/simpler (reducing code in API router), but introducing redudancy in data and making loading and cleaning process more complex.
 ---
 ## My comments
-Generally, in the API implementation, I've chosen to distribute more workolad on the database and minimize work with the fetched data in the router, since database has internal optimization tools, which are smarter than I am probably, hence, increasing the speed. I also was thinking about using 2<sup>nd</sup> approach, but I felt like it was not the goal of this challange to reduce the SQL ussage to `select * from table` and do the rest using pandas, although I do like the idea of faster API calls more, but at the and of the day, ***you gotta pay the toll somewhere***, is it at loading or at reading.
+Generally, in the API implementation, I've chosen to distribute more workolad on the database and minimize work with the fetched data in the router, since database has internal optimization tools, which are smarter than I am probably, hence, increasing the speed. I also was thinking about using 2<sup>nd</sup> approach, but I felt like it was not the goal of this challenge to reduce the SQL ussage to `select * from table` and do the rest using pandas, although I do like the idea of faster API calls more, but at the and of the day, ***you gotta pay the toll somewhere***, is it at loading or at reading.
 
 
 

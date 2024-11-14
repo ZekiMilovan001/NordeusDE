@@ -1,12 +1,9 @@
 # Nordeus Data Engineering challange
 
-## Enviroment setup (for Windows)
+## Download project
 
 Create folder and then open a terminal in that folder and run these commands:
 1. `git clone https://github.com/ZekiMilovan001/NordeusDE.git`
-2. `python -m venv venv`
-3. `./venv/Scripts/activate`
-4. `pip install -r requirements.txt`
 
 ## Setting Up the .env File
 

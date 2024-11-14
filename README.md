@@ -212,7 +212,20 @@ For simplicity, each country is assigned exactly one timezone.
       - Droped the `type` column in session data, since i wanted that bonus 😎.
 2. Explored additional information about dataset.
       - Checked if `session_ping` and `match` types of pings can happen at the same time. (i.e. Checked if general playtime can be queried using only session info. It can.)
-### Queries
+### Data organization
+The data was split into 3 main sub-categories that refer to their respective `event_type` values, thus 3 initial tables:
+      - *Register data* 
+      - *Session data*
+      - *Match data*
+All of these tables contain before mentioned fields. <br>
+The `event_data` field was discarded from these tables, but it formed three new tables:
+      - *Register events*
+      - *Session events*
+      - *Match events*
+These tables contain event information for their respective events, explained before, with addition of `event_id` to each of them, which acts as a foreign key to *data* tables.
+
+
+### Queries - Player Stats
 Since some of them are pretty simple, such as extracting country of the registered user, I will be skipping some.
 1. How many days have passed since this user last logged in?
       - Idea was to filter data based on `date` parameter (`event_time` date-value <= `date`) and get the most recent one, then calculate delta between that time and `date` value.
@@ -232,8 +245,21 @@ Since some of them are pretty simple, such as extracting country of the register
       - *Games table*: It has same data as original, with the addition of start and end time for each game.
       - *Games away* and *Games home* table: Has contents of *Games table* but filtered whether user was playing at home or away. Wiith addition of `live_game` field, that is showing how much player was participating in a match since start of it (e.g. 60 - `players_latency`, where `player_latency` is telling us how late player was late for the match start). Similar stands for match ends.
       - *Result* by comining these tables and summing `live_game` values for that player, we can extract how much time player has spent playing matches actively. Ratio is caluclated using already found time spent value.
+### Queries - Game Stats
+1. Number of daily active users.
+      - Counted unique occurencies of `user_id` filtered by before mentioned criteria.
+2. Number of sessions and average number of sessions for users that have at least one session.
+      - Used same flag "trick" as in ***Player stats*** but for every player, filtered by before mentioned criteria.
+3. The user/users with the most points overall.
+      - Found maximum number of points overall, then filtered all players who have that number of points, filtered by before mentioned criteria.
+---
 
-
+## What could've been done differentely
+1. The general session data could've been stored into one table, containing all fields, since all event types have same fields (excluding `event_data` field), but I've chosen to separate them for the optimization reasons (less data to be queried) and for the sake of simplicity, also, they were not needed at the same time in the *API*. If *ALL* data got combined into one big table, a lot of fields would be ***NULL***, since `event_data` has different attributes depending on `event_type` value, thus wasting memory and slowing down the queries.
+2. *"Table for each query"*: If the data was manipulated in such a way, that table gets created for every query in task requirements, the queries would be faster, shorter/simpler (reducing code in API router), but introducing redudancy in data and making loading and cleaning process more complex.
+---
+## My comments
+Generally, in the API implementation, I've chosen to distribute more workolad on the database and minimize work with the fetched data in the router, since database has internal optimization tools, which are smarter than I am probably, hence, increasing the speed. I also was thinking about using 2<sup>nd</sup> approach, but I felt like it was not the goal of this challange to reduce the SQL ussage to `select * from table` and do the rest using pandas, although I do like the idea of faster API calls more, but at the and of the day, ***you gotta pay the toll somewhere***, is it at loading or at reading.
 
 
 
